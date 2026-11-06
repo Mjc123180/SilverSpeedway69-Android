@@ -1,3 +1,4 @@
+
 name: Build Android APK
 
 on:
@@ -8,10 +9,12 @@ on:
 
 jobs:
   android:
+    name: Build SilverSpeedWay69
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read                                  
+      contents: read
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,18 +30,30 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Install Capacitor
+      - name: Install dependencies
         run: npm install
 
       - name: Create Android project
         run: npx cap add android
 
+      - name: Sync game files to Android
+        run: npx cap sync android
+
+      - name: Make Gradle executable
+        working-directory: android
+        run: chmod +x gradlew
+
       - name: Build Android APK
-        working-directory: android        
-       run: ./gradlew assembleDebug
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Verify APK exists
+        run: test -f android/app/build/outputs/apk/debug/app-debug.apk
+
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: SilverSpeedWay69-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error 
+          if-no-files-found: error
+          retention-days: 30

@@ -37,7 +37,7 @@ jobs:
       - name: Build Android APK
         working-directory: android
        run: bash gradlew assembleDebug   
-      --no-daemon 
+ --no-daemon 
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4

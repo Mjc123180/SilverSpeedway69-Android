@@ -36,7 +36,7 @@ jobs:
 
       - name: Build Android APK
         working-directory: android        
-     run:bash gradlew assembleDebug      
+     run: bash gradlew assembleDebug      
  --no-daemon
 
       - name: Upload Android APK

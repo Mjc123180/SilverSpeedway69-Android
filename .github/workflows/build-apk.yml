@@ -36,8 +36,70 @@ jobs:
       - name: Create Android project
         run: npx cap add android
 
-      - name: Sync game files to Android
+      - name: Sync game files
         run: npx cap sync android
+
+      - name: Install image tools
+        run: python3 -m pip install Pillow --break-system-packages
+
+      - name: Generate Android app icons
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+
+          base = Path("android/app/src/main/res")
+          sizes = {
+              "mipmap-mdpi": 48,
+              "mipmap-hdpi": 72,
+              "mipmap-xhdpi": 96,
+              "mipmap-xxhdpi": 144,
+              "mipmap-xxxhdpi": 192,
+          }
+
+          square = Image.open("s69-square.png").convert("RGBA")
+          round_icon = Image.open("s69-round.png").convert("RGBA")
+
+          for folder, size in sizes.items():
+              target = base / folder
+              target.mkdir(parents=True, exist_ok=True)
+
+              square.resize(
+                  (size, size),
+                  Image.Resampling.LANCZOS
+              ).save(target / "ic_launcher.png")
+
+              round_icon.resize(
+                  (size, size),
+                  Image.Resampling.LANCZOS
+              ).save(target / "ic_launcher_round.png")
+
+              square.resize(
+                  (size, size),
+                  Image.Resampling.LANCZOS
+              ).save(target / "ic_launcher_foreground.png")
+
+          # Update adaptive launcher background.
+          values = base / "values"
+          values.mkdir(parents=True, exist_ok=True)
+          (values / "ic_launcher_background.xml").write_text(
+              '<resources><color name="ic_launcher_background">'
+              '#000000</color></resources>'
+          )
+
+          # Remove default adaptive icon definitions so
+          # Android uses the supplied launcher artwork.
+          for folder in ["mipmap-anydpi-v26", "mipmap-anydpi"]:
+              directory = base / folder
+              for filename in [
+                  "ic_launcher.xml",
+                  "ic_launcher_round.xml",
+              ]:
+                  path = directory / filename
+                  if path.exists():
+                      path.unlink()
+          PY
 
       - name: Make Gradle executable
         working-directory: android
@@ -47,13 +109,19 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
-      - name: Verify APK exists
-        run: test -f android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Rename APK
+        run: |
+          mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/SilverSpeedWay69.apk
+
+      - name: Verify APK
+        run: |
+          test -f android/app/build/outputs/apk/debug/SilverSpeedWay69.apk
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
-          name: SilverSpeedWay69-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: SilverSpeedWay69-Android
+          path: android/app/build/outputs/apk/debug/SilverSpeedWay69.apk
           if-no-files-found: error
           retention-days: 30
+          

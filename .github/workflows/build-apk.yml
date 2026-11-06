@@ -34,7 +34,7 @@ jobs:
       - name: Create Android project
         run: npx cap add android
 
-            - name: Build Android APK
+      - name: Build Android APK
         working-directory: android
         run:bash gradlew assembleDebug --no-daemon
 
